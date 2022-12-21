@@ -140,11 +140,11 @@ class RawPlot(BasePlot):
     def set_initial_region(self):
         """Set the initial region to."""
         self.region.setRegion([self.times.min(), self.times.max()])
-        self.region.setClipItem(self.bottom)
+        #self.region.setClipItem(self.bottom)
 
 
 class EpochsPlot(BasePlot):
-    def __init__(self, info, data, events, tmin, tmax, picks=None, event_id=None):
+    def __init__(self, epochs, info, data, events, tmin, tmax, picks=None, event_id=None):
         super().__init__()
         self.picks = picks
         self.info = info
@@ -156,14 +156,15 @@ class EpochsPlot(BasePlot):
         time = abs(tmin) + abs(tmax)
         self._last_time = self._data.shape[0] * time
         self.times = np.linspace(0, self._last_time, self.n_times)
-        
+        self.bad_epochs = np.full((1, self._data.shape[0]), False)[0]
+        #print(self.bad_epochs)
         
         self._segments = self._get_segments()
+        self._segment_boundings = self.init_segment_boxes()
         # Plot the data
         self.plot_data()
         
         # Set the initial region and connect the signals for updating the region and plots
-        #         vb = p1.vb
         self.set_initial_region()
         self.connect_signals()
 
@@ -172,6 +173,23 @@ class EpochsPlot(BasePlot):
         
         self.show()
         self._app.exec()
+        
+        # This is bad, change later
+        epochs.bad_epochs = self.bad_epochs
+        
+    def init_segment_boxes(self):
+        """Initialize the bounding boxes of segments to track its state"""
+        bounding_boxes = []
+        
+        for segment in self._segments:
+            box = pg.LinearRegionItem(values=(segment[0], segment[1]), 
+                                      movable=False, brush=pg.mkBrush(None),
+                                      pen=pg.mkPen(None), bounds=(segment[0], segment[1]))
+            box.setZValue(10)
+            self.top.addItem(box, ignoreBounds=True)
+            bounding_boxes.append(box)
+        
+        return bounding_boxes
         
     def plot_data(self, **kwargs):
         """Plot the data on the top and bottom plots."""
@@ -227,6 +245,7 @@ class EpochsPlot(BasePlot):
         scene_coords = evt.scenePos()
         if self.top.sceneBoundingRect().contains(scene_coords):
             mouse_point = self.top.plotItem.vb.mapSceneToView(scene_coords)
+            self._clicked_on_segment(mouse_point.x())
             print(f'clicked plot X: {mouse_point.x()}, Y: {mouse_point.y()}, event: {evt}')
         
     def _get_segments(self):
@@ -252,5 +271,22 @@ class EpochsPlot(BasePlot):
             pos.append(value)
             
         return pos
-
+    
+    def _clicked_on_segment(self, x):
+        
+        for index, segment in enumerate(self._segments):
+            if self._in_range(x, segment):
+                #print(f"Value {x} is in segment {segment} at index {index}")
+                self._update_segment_box(index)
+                self.bad_epochs[index] = not self.bad_epochs[index]
+                
+    def _update_segment_box(self, index):
+        
+        if not self.bad_epochs[index]:
+            self._segment_boundings[index].setBrush((0, 0, 255, 50))
+        else:
+            self._segment_boundings[index].setBrush(None)
+        
+    def _in_range(self, val, t):
+        return t[0] <= val <= t[1]
 

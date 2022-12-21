@@ -49,6 +49,8 @@ class BaseEpochs(TimeMixin, EpochsMixin):
         
         if self.events.size == 0:
            raise RuntimeError("No events were found.")
+           
+        self.bad_epochs = np.full((1, self.events.size), False)[0]
         
         times = np.arange(tmin, tmax + float(1/self.info['sfreq']), float(1/self.info['sfreq']))
         self._set_times(times)
@@ -102,6 +104,11 @@ class BaseEpochs(TimeMixin, EpochsMixin):
         """
         return self._data
     
+    def drop_bads(self):
+        """ Drop bad epochs """
+        self._data = self._data[~self.bad_epochs, :, :]
+        self.events = self.events[~self.bad_epochs]
+        
     def to_data_frame(self):
         """ Epochs to data frame
         
@@ -134,7 +141,7 @@ class BaseEpochs(TimeMixin, EpochsMixin):
         return deepcopy(self)
     
     def plot(self):
-        return EpochsPlot(info=self.info, data=self._data, events=self.events, 
+        return EpochsPlot(epochs=self, info=self.info, data=self._data, events=self.events, 
                           tmin=self.tmin, tmax=self.tmax, event_id=self.event_id, 
                           picks=self.picks)
 
