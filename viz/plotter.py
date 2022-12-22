@@ -119,9 +119,9 @@ class RawPlot(BasePlot):
     def plot_data(self, **kwargs):
         """Plot the data on the top and bottom plots."""
         
-        for idx, p in enumerate(self.picks):
-            self.top.plot(self.times, self._data[:, p] + idx)
-            self.bottom.plot(self.times, self._data[:, p] + idx)
+        for index, p in enumerate(self.picks):
+            self.top.plot(self.times, self._data[:, p] + index/2)
+            self.bottom.plot(self.times, self._data[:, p])
     
     def set_tick_marks(self):
         """Set the tick marks for the left axis of the top plot."""
@@ -129,7 +129,7 @@ class RawPlot(BasePlot):
         ticks = []
         ch_names = np.array(self.info['ch_names'])
         for index, chan in enumerate(ch_names[self.picks]):
-            pos_y = self._data[:, index].min() + index
+            pos_y = self._data[:, index].min() + index/2
             label = chan
             ticks.append((pos_y, label))
         
@@ -139,7 +139,8 @@ class RawPlot(BasePlot):
     
     def set_initial_region(self):
         """Set the initial region to."""
-        self.region.setRegion([self.times.min(), self.times.max()])
+        self.region.setRegion([0, self.times.max()])
+        self.region.setBounds([0, self.times.max()])
         #self.region.setClipItem(self.bottom)
 
 
@@ -177,6 +178,11 @@ class EpochsPlot(BasePlot):
         # This is bad, change later
         epochs.bad_epochs = self.bad_epochs
         
+    def set_initial_region(self):
+        """Set the initial region to."""
+        self.region.setRegion([0, self.times.max()])
+        self.region.setBounds([0, self.times.max()])
+        
     def init_segment_boxes(self):
         """Initialize the bounding boxes of segments to track its state"""
         bounding_boxes = []
@@ -190,6 +196,9 @@ class EpochsPlot(BasePlot):
             bounding_boxes.append(box)
         
         return bounding_boxes
+    
+        
+
         
     def plot_data(self, **kwargs):
         """Plot the data on the top and bottom plots."""
@@ -204,11 +213,11 @@ class EpochsPlot(BasePlot):
         
         # Plot seperators
         for i, segment in enumerate(self._segments):
-            v_bar = pg.InfiniteLine(pos=segment[1], angle=90)
-            #print(i, self.events[i, 1])
+            label = str(self.events[i, 1])
+            v_bar = pg.InfiniteLine(pos=segment[1], angle=90, label=label, 
+                                    labelOpts={'rotateAxis':(1,0), 'anchors':[(1,0.8),(1,0.8)], 'color':'r'})
             self.top.addItem(v_bar)
 
-    def set_tick_marks(self):
         """Set the tick marks for the y-axis and x-axis of the top plot """
         
         y_ticks = []
@@ -234,11 +243,6 @@ class EpochsPlot(BasePlot):
         self.top.getPlotItem().getAxis('bottom').setTicks([
             x_ticks
             ])
-
-    
-    def set_initial_region(self):
-        """Set the initial region to."""
-        self.region.setRegion([self.times.min(), self.times.max()])
         
     def mouse_clicked(self, evt):
         """Handle mouse clicks"""
@@ -252,13 +256,13 @@ class EpochsPlot(BasePlot):
         """Get start and end points of segments"""
         tuple_list = []
         
-        dist = int(abs(self.tmin) + abs(self.tmax) * 1000)
-        last_time = int(self._last_time * 1000)
+        dist = abs(self.tmin) + abs(self.tmax)
+        #last_time = int(self._last_time * 1000)
         
-        for i in range(0, last_time, dist):
-            tuple_list.append((i, min(i + dist, last_time)))
+        for i in np.arange(0, self._last_time, dist):
+            tuple_list.append((i, i + dist))
         
-        segments = np.array(tuple_list) / 1000
+        segments = np.array(tuple_list)
         
         return segments
 
