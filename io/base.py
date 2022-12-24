@@ -72,7 +72,7 @@ class BaseRaw(TimeMixin):
     @property
     def times(self):
         """Time points in ms"""
-        return np.arange(self.first_time, self.last_time + float(1/self.info['sfreq']), float(1/self.info['sfreq']))
+        return np.arange(self.n_times, dtype=np.float64) / self.info['sfreq']
     
     @property
     def n_times(self):

@@ -250,7 +250,6 @@ class EpochsPlot(BasePlot):
         if self.top.sceneBoundingRect().contains(scene_coords):
             mouse_point = self.top.plotItem.vb.mapSceneToView(scene_coords)
             self._clicked_on_segment(mouse_point.x())
-            print(f'clicked plot X: {mouse_point.x()}, Y: {mouse_point.y()}, event: {evt}')
         
     def _get_segments(self):
         """Get start and end points of segments"""

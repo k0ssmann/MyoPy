@@ -1,2 +1,2 @@
-from . import eventDetection
-from ..epochs import Epochs
+from . import detection
+#from ..epochs import Epochs

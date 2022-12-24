@@ -90,7 +90,14 @@ class BaseEpochs(TimeMixin, EpochsMixin):
         end_index = np.searchsorted(self._raw_times, end_time)
         
         for i, sl in enumerate(list(zip(start_index, end_index + 1))):
-            self._data[i,:,:] = self._raw._data[slice(*sl), self.picks]
+            data = self._raw._data[slice(*sl), self.picks]
+            
+            if end_index[i] - start_index[i] < self._last_samp - 1:
+                fill_in = np.zeros((self._last_samp, len(self.picks)))
+                fill_in[0:data.shape[0], self.picks] = self._raw._data[slice(*sl), self.picks]
+                data = fill_in
+                
+            self._data[i,:,:] = data
         
     def get_data(self):
         """ Get data
