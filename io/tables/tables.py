@@ -78,7 +78,7 @@ class Tables(BaseRaw):
           # comma-seperated floats
           data[col] = data[col].apply(lambda x: pd.to_numeric(str(x).replace(',', '.')))
         
-        data = data.to_numpy()
+        data = data.to_numpy(dtype='float64')
         
         super(Tables, self).__init__(_info, data)
             

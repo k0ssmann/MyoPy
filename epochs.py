@@ -50,7 +50,7 @@ class BaseEpochs(TimeMixin, EpochsMixin):
         if self.events.size == 0:
            raise RuntimeError("No events were found.")
            
-        self.bad_epochs = np.full((1, self.events.size), False)[0]
+        self.bad_epochs = np.full((1, self.events.shape[0]), False)[0]
         
         times = np.arange(tmin, tmax + float(1/self.info['sfreq']), float(1/self.info['sfreq']))
         self._set_times(times)
